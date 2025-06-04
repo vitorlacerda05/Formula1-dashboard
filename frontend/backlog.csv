@@ -1,0 +1,12 @@
+Módulo/Endpoint (Método HTTP),Público Alvo,Breve Descrição / Objetivo (Comportamento pode variar por tipo de usuário),Responsável,Status
+"POST /login","Todos","Autenticar usuário, retornar token/sessão e informações básicas do perfil.",,
+"POST /logout (Opcional)","Todos","Invalidar sessão/token do usuário.",,
+"POST /admin/escuderias","Admin","Cadastrar nova escuderia. Gatilho no BD deve criar usuário correspondente na tabela `USERS`.",,
+"POST /admin/pilotos","Admin","Cadastrar novo piloto. Gatilho no BD deve criar usuário correspondente na tabela `USERS`.",,
+"GET /dashboard","Admin, Escuderia, Piloto","Retorna dados agregados para o dashboard do usuário logado (conteúdo específico para Admin, Escuderia ou Piloto).",,
+"GET /escuderia/pilotos/consulta","Escuderia","Consultar pilotos pelo `forename` que já correram pela escuderia logada. Parâmetro de query: `forename`.",,
+"POST /escuderia/pilotos/importar","Escuderia","Inserir um ou mais pilotos para a escuderia logada a partir de um arquivo.",,
+"GET /relatorios/status-resultados","Admin, Escuderia, Piloto","Rel. 1 (Admin), Rel. 5 (Escuderia), Rel. 7 (Piloto): Quantidade de resultados por status, com escopo ajustado ao perfil do usuário.",,
+"GET /admin/relatorios/aeroportos-proximos","Admin","Rel. 2: Aeroportos brasileiros (médios/grandes) a no máximo 100Km da cidade informada. Parâmetro de query: `cidadeNome`.",,
+"GET /admin/relatorios/escuderias-detalhes","Admin","Rel. 3: Lista escuderias com qtd. pilotos; qtd. corridas (total e por circuito com min/méd/máx voltas); detalhes de cada corrida por circuito.",,
+"GET /escuderia/relatorios/pilotos-vitorias","Escuderia","Rel. 4: Lista pilotos da escuderia logada e a quantidade de vezes que alcançaram a primeira posição.",,
