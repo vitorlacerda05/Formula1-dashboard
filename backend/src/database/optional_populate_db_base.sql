@@ -1,3 +1,6 @@
+-- Criado para popular a base de dados com dados aleatórios
+-- Não é necessário executar este arquivo
+
 -- Adição de pilotos testes
 INSERT INTO drivers (driver_ref, number, code, forename, surname, date_of_birth, nationality) VALUES
 ('hamilton', 44, 'HAM', 'Lewis', 'Hamilton', '1985-01-07', 'British'),

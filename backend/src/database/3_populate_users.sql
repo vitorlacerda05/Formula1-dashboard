@@ -1,5 +1,8 @@
--- Primeiro, criar os usuários no PostgreSQL
+-- Criação de usuários
 DO $$
+DECLARE
+    driver_rec RECORD;
+    constructor_rec RECORD;
 BEGIN
     -- Criar usuário administrador
     EXECUTE 'CREATE USER admin WITH PASSWORD ''admin''';
