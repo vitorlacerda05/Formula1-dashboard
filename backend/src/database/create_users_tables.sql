@@ -2,7 +2,7 @@
 CREATE TABLE users (
     userid          SERIAL PRIMARY KEY,
     login           VARCHAR(50) UNIQUE NOT NULL,
-    password        VARCHAR(256) NOT NULL,  -- Para armazenar hash SHA-256
+    password        TEXT NOT NULL,  -- Armazenar hash SCRAM-SHA-256
     tipo            VARCHAR(20) CHECK (tipo IN ('Administrador', 'Escuderia', 'Piloto')),
     id_original     INTEGER,  -- ID da tabela original (driver_id ou constructor_id)
     data_criacao    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -31,7 +31,7 @@ COMMENT ON TABLE users_log IS 'Tabela de logs de acesso dos usuários';
 -- Comentários nas colunas da tabela users
 COMMENT ON COLUMN users.userid IS 'Identificador único do usuário';
 COMMENT ON COLUMN users.login IS 'Login do usuário (deve ser único)';
-COMMENT ON COLUMN users.password IS 'Senha do usuário (hash SHA-256)';
+COMMENT ON COLUMN users.password IS 'Senha do usuário (hash SCRAM-SHA-256)';
 COMMENT ON COLUMN users.tipo IS 'Tipo do usuário (Administrador, Escuderia, Piloto)';
 COMMENT ON COLUMN users.id_original IS 'ID da tabela original (driver_id ou constructor_id)';
 COMMENT ON COLUMN users.data_criacao IS 'Data de criação do usuário';
