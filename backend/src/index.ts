@@ -2,9 +2,10 @@ import Fastify, { FastifyInstance } from 'fastify'
 import { Server, IncomingMessage, ServerResponse } from 'http'
 import fastifyCookie from '@fastify/cookie'
 import routes from '../routes/index'
+import cors from '@fastify/cors';
 
 const server: FastifyInstance<Server, IncomingMessage, ServerResponse> = Fastify({
-  logger: true, // Habilita o logger embutido do Fastify (ótimo para desenvolvimento)
+  logger: true,
 })
 
 // Registrar plugins
@@ -13,9 +14,15 @@ server.register(fastifyCookie, {
   parseOptions: {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    maxAge: 24 * 60 * 60, // 24 horas
+    maxAge: 24 * 60 * 60,
     path: '/'
   }
+})
+
+// **Registrar o CORS aqui**
+server.register(cors, {
+  origin: 'http://localhost:8080',
+  credentials: true
 })
 
 // Register API routes
