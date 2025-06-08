@@ -1,62 +1,52 @@
-
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
-export type UserType = 'administrator' | 'team' | 'driver';
-
-export interface User {
-  id: string;
-  type: UserType;
-  name: string;
-  teamName?: string;
-  driversCount?: number;
-  fullName?: string;
+interface User {
+  userid: number;
+  login: string;
+  tipo: string;
+  isAuthenticated: boolean;
 }
 
 interface AuthContextType {
   user: User | null;
   login: (username: string, password: string) => Promise<boolean>;
-  logout: () => void;
+  logout: () => Promise<void>;
   isAuthenticated: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock users for demonstration
-const mockUsers: Record<string, User> = {
-  'admin': {
-    id: 'admin',
-    type: 'administrator',
-    name: 'admin'
-  },
-  'ferrari': {
-    id: 'ferrari',
-    type: 'team',
-    name: 'ferrari',
-    teamName: 'Scuderia Ferrari',
-    driversCount: 2
-  },
-  'hamilton': {
-    id: 'hamilton',
-    type: 'driver',
-    name: 'hamilton',
-    fullName: 'Lewis Hamilton',
-    teamName: 'Mercedes'
-  }
-};
-
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
 
   const login = async (username: string, password: string): Promise<boolean> => {
-    // Simple authentication logic
-    if (password === '123' && mockUsers[username]) {
-      setUser(mockUsers[username]);
-      return true;
+    try {
+      const response = await fetch('http://localhost:3000/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // importante para cookies de sessão
+        body: JSON.stringify({ login: username, password }),
+      });
+      const data = await response.json();
+      if (data.success && data.session) {
+        setUser(data.session);
+        return true;
+      }
+      setUser(null);
+      return false;
+    } catch (error) {
+      setUser(null);
+      return false;
     }
-    return false;
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await fetch('http://localhost:3000/api/auth/logout', {
+      method: 'POST',
+      credentials: 'include',
+    });
     setUser(null);
   };
 
