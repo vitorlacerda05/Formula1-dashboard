@@ -3,6 +3,7 @@ export type UserType = 'Administrador' | 'Piloto' | 'Escuderia';
 export interface User {
   userid: number;
   login: string;
+  password: string;
   tipo: UserType;
   idOriginal: number;
   ativo: boolean;

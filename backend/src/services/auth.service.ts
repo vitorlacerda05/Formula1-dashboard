@@ -6,14 +6,17 @@ export class AuthService {
   async authenticateUser(loginRequest: LoginRequest): Promise<LoginResponse> {
     try {
       const { login, password } = loginRequest;
+      console.log('Tentando autenticar:', { login });
 
       // Buscar usuário no banco
       const result = await pool.query(
-        `SELECT userid, login, tipo, id_original, ativo 
+        `SELECT userid, login, tipo, id_original, ativo, password 
          FROM users 
          WHERE login = $1 AND ativo = 'S'`,
         [login]
       );
+
+      console.log('Resultado da busca:', result.rows);
 
       if (result.rows.length === 0) {
         return {
@@ -23,14 +26,19 @@ export class AuthService {
       }
 
       const user: User = result.rows[0];
+      console.log('Usuário encontrado:', { 
+        userid: user.userid, 
+        login: user.login, 
+        tipo: user.tipo 
+      });
 
-      // Verificar senha usando a função do PostgreSQL
+      // Verificar senha usando a função verify_scram_hash
       const passwordCheck = await pool.query(
-        `SELECT password = generate_scram_hash($1) as is_valid
-         FROM users 
-         WHERE userid = $2`,
-        [password, user.userid]
+        `SELECT verify_scram_hash($1, $2) as is_valid`,
+        [password, user.password]
       );
+
+      console.log('Verificação de senha:', passwordCheck.rows[0]);
 
       if (!passwordCheck.rows[0].is_valid) {
         return {

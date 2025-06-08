@@ -11,10 +11,12 @@ export class AuthController {
 
   async login(request: FastifyRequest<{ Body: LoginRequest }>, reply: FastifyReply) {
     try {
+      console.log('Recebida requisição de login:', request.body);
       const loginRequest = request.body;
       const ipOrigem = this.authService.getClientIp(request);
       
       const response = await this.authService.authenticateUser(loginRequest);
+      console.log('Resposta da autenticação:', response);
       
       if (response.success && response.session) {
         // Salvar sessão em cookie
