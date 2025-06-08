@@ -5,6 +5,7 @@ interface User {
   login: string;
   tipo: string;
   isAuthenticated: boolean;
+  type?: 'administrator' | 'team' | 'driver';
 }
 
 interface AuthContextType {
@@ -16,6 +17,19 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+function mapTipoToType(tipo: string): 'administrator' | 'team' | 'driver' | undefined {
+  switch (tipo) {
+    case 'Administrador':
+      return 'administrator';
+    case 'Escuderia':
+      return 'team';
+    case 'Piloto':
+      return 'driver';
+    default:
+      return undefined;
+  }
+}
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
 
@@ -26,12 +40,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'include', // importante para cookies de sessão
+        credentials: 'include',
         body: JSON.stringify({ login: username, password }),
       });
       const data = await response.json();
       if (data.success && data.session) {
-        setUser(data.session);
+        const mappedUser = {
+          ...data.session,
+          type: mapTipoToType(data.session.tipo),
+        };
+        setUser(mappedUser);
         return true;
       }
       setUser(null);
