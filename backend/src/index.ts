@@ -1,9 +1,21 @@
 import Fastify, { FastifyInstance } from 'fastify'
 import { Server, IncomingMessage, ServerResponse } from 'http'
+import fastifyCookie from '@fastify/cookie'
 import routes from '../routes/index'
 
 const server: FastifyInstance<Server, IncomingMessage, ServerResponse> = Fastify({
   logger: true, // Habilita o logger embutido do Fastify (ótimo para desenvolvimento)
+})
+
+// Registrar plugins
+server.register(fastifyCookie, {
+  secret: process.env.COOKIE_SECRET || 'um-segredo-muito-seguro',
+  parseOptions: {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 24 * 60 * 60, // 24 horas
+    path: '/'
+  }
 })
 
 // Register API routes
