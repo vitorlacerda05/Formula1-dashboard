@@ -44,6 +44,44 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Função para atualizar usuário quando um piloto é modificado
+CREATE OR REPLACE FUNCTION update_driver_user()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Atualizar usuário no PostgreSQL
+    EXECUTE format('ALTER USER %I RENAME TO %I', 
+        OLD.driver_ref || '_d',
+        NEW.driver_ref || '_d');
+    
+    -- Atualizar na tabela users
+    UPDATE users 
+    SET login = NEW.driver_ref || '_d',
+        password = generate_scram_hash(NEW.driver_ref)
+    WHERE tipo = 'Piloto' AND id_original = NEW.driver_id;
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Função para atualizar usuário quando uma escuderia é modificada
+CREATE OR REPLACE FUNCTION update_constructor_user()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Atualizar usuário no PostgreSQL
+    EXECUTE format('ALTER USER %I RENAME TO %I', 
+        OLD.constructor_ref || '_c',
+        NEW.constructor_ref || '_c');
+    
+    -- Atualizar na tabela users
+    UPDATE users 
+    SET login = NEW.constructor_ref || '_c',
+        password = generate_scram_hash(NEW.constructor_ref)
+    WHERE tipo = 'Escuderia' AND id_original = NEW.constructor_id;
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 -- Trigger para criar usuário quando um novo piloto é adicionado
 CREATE TRIGGER trg_create_driver_user
     AFTER INSERT ON drivers
@@ -54,4 +92,16 @@ CREATE TRIGGER trg_create_driver_user
 CREATE TRIGGER trg_create_constructor_user
     AFTER INSERT ON constructors
     FOR EACH ROW
-    EXECUTE FUNCTION create_constructor_user(); 
+    EXECUTE FUNCTION create_constructor_user();
+
+-- Trigger para atualizar usuário quando um piloto é modificado
+CREATE TRIGGER trg_update_driver_user
+    AFTER UPDATE ON drivers
+    FOR EACH ROW
+    EXECUTE FUNCTION update_driver_user();
+
+-- Trigger para atualizar usuário quando uma escuderia é modificada
+CREATE TRIGGER trg_update_constructor_user
+    AFTER UPDATE ON constructors
+    FOR EACH ROW
+    EXECUTE FUNCTION update_constructor_user(); 
