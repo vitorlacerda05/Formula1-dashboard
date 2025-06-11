@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -13,11 +12,25 @@ import Dashboard from "./pages/Dashboard";
 import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
 import { ReportStatusProvider } from "./contexts/ReportStatusContext";
+import { Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient();
 
+const LoadingScreen = () => (
+  <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-700">
+    <div className="text-center">
+      <Loader2 className="w-12 h-12 animate-spin text-red-600 mx-auto mb-4" />
+      <p className="text-gray-600 dark:text-gray-300">Verificando autenticação...</p>
+    </div>
+  </div>
+);
+
 const AppRoutes = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
 
   return (
     <Layout>

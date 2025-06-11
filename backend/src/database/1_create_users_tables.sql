@@ -55,11 +55,11 @@ CREATE OR REPLACE FUNCTION validate_id_original()
 RETURNS TRIGGER AS $$
 BEGIN
     IF NEW.tipo = 'Piloto' THEN
-        IF NOT EXISTS (SELECT 1 FROM drivers WHERE driver_id = NEW.id_original) THEN
+        IF NOT EXISTS (SELECT 1 FROM driver WHERE driverid = NEW.id_original) THEN
             RAISE EXCEPTION 'ID de piloto inválido';
         END IF;
     ELSIF NEW.tipo = 'Escuderia' THEN
-        IF NOT EXISTS (SELECT 1 FROM constructors WHERE constructor_id = NEW.id_original) THEN
+        IF NOT EXISTS (SELECT 1 FROM constructors WHERE constructorid = NEW.id_original) THEN
             RAISE EXCEPTION 'ID de escuderia inválido';
         END IF;
     END IF;

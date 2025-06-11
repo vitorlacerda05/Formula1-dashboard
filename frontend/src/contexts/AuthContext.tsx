@@ -1,18 +1,12 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
-
-interface User {
-  userid: number;
-  login: string;
-  tipo: string;
-  isAuthenticated: boolean;
-  type?: 'administrator' | 'team' | 'driver';
-}
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { User, LoginResponse, SessionResponse } from '../types/api';
 
 interface AuthContextType {
   user: User | null;
   login: (username: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
+  isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -32,6 +26,39 @@ function mapTipoToType(tipo: string): 'administrator' | 'team' | 'driver' | unde
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Verificar sessão existente na inicialização
+  useEffect(() => {
+    checkSession();
+  }, []);
+
+  const checkSession = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch('http://localhost:3000/api/auth/session', {
+        method: 'GET',
+        credentials: 'include',
+      });
+      
+      const data: SessionResponse = await response.json();
+      
+      if (data.success && data.isAuthenticated && data.session) {
+        const mappedUser: User = {
+          ...data.session,
+          type: mapTipoToType(data.session.tipo),
+        };
+        setUser(mappedUser);
+      } else {
+        setUser(null);
+      }
+    } catch (error) {
+      console.error('Erro ao verificar sessão:', error);
+      setUser(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const login = async (username: string, password: string): Promise<boolean> => {
     try {
@@ -43,9 +70,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         credentials: 'include',
         body: JSON.stringify({ login: username, password }),
       });
-      const data = await response.json();
+      const data: LoginResponse = await response.json();
       if (data.success && data.session) {
-        const mappedUser = {
+        const mappedUser: User = {
           ...data.session,
           type: mapTipoToType(data.session.tipo),
         };
@@ -61,17 +88,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = async () => {
-    await fetch('http://localhost:3000/api/auth/logout', {
-      method: 'POST',
-      credentials: 'include',
-    });
-    setUser(null);
+    try {
+      await fetch('http://localhost:3000/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error);
+    } finally {
+      setUser(null);
+    }
   };
 
   const isAuthenticated = !!user;
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAuthenticated }}>
+    <AuthContext.Provider value={{ user, login, logout, isAuthenticated, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

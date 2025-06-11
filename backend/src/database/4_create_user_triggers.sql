@@ -4,16 +4,16 @@ RETURNS TRIGGER AS $$
 BEGIN
     -- Criar usuário no PostgreSQL
     EXECUTE format('CREATE USER %I WITH PASSWORD %L', 
-        NEW.driver_ref || '_d', 
-        NEW.driver_ref);
+        NEW.driverref || '_d', 
+        NEW.driverref);
     
     -- Inserir na tabela users
     INSERT INTO users (login, password, tipo, id_original, ativo)
     VALUES (
-        NEW.driver_ref || '_d',
-        generate_scram_hash(NEW.driver_ref),
+        NEW.driverref || '_d',
+        generate_scram_hash(NEW.driverref),
         'Piloto',
-        NEW.driver_id,
+        NEW.driverid,
         'S'
     );
     
@@ -27,16 +27,16 @@ RETURNS TRIGGER AS $$
 BEGIN
     -- Criar usuário no PostgreSQL
     EXECUTE format('CREATE USER %I WITH PASSWORD %L', 
-        NEW.constructor_ref || '_c', 
-        NEW.constructor_ref);
+        NEW.constructorref || '_c', 
+        NEW.constructorref);
     
     -- Inserir na tabela users
     INSERT INTO users (login, password, tipo, id_original, ativo)
     VALUES (
-        NEW.constructor_ref || '_c',
-        generate_scram_hash(NEW.constructor_ref),
+        NEW.constructorref || '_c',
+        generate_scram_hash(NEW.constructorref),
         'Escuderia',
-        NEW.constructor_id,
+        NEW.constructorid,
         'S'
     );
     
@@ -50,14 +50,14 @@ RETURNS TRIGGER AS $$
 BEGIN
     -- Atualizar usuário no PostgreSQL
     EXECUTE format('ALTER USER %I RENAME TO %I', 
-        OLD.driver_ref || '_d',
-        NEW.driver_ref || '_d');
+        OLD.driverref || '_d',
+        NEW.driverref || '_d');
     
     -- Atualizar na tabela users
     UPDATE users 
-    SET login = NEW.driver_ref || '_d',
-        password = generate_scram_hash(NEW.driver_ref)
-    WHERE tipo = 'Piloto' AND id_original = NEW.driver_id;
+    SET login = NEW.driverref || '_d',
+        password = generate_scram_hash(NEW.driverref)
+    WHERE tipo = 'Piloto' AND id_original = NEW.driverid;
     
     RETURN NEW;
 END;
@@ -69,14 +69,14 @@ RETURNS TRIGGER AS $$
 BEGIN
     -- Atualizar usuário no PostgreSQL
     EXECUTE format('ALTER USER %I RENAME TO %I', 
-        OLD.constructor_ref || '_c',
-        NEW.constructor_ref || '_c');
+        OLD.constructorref || '_c',
+        NEW.constructorref || '_c');
     
     -- Atualizar na tabela users
     UPDATE users 
-    SET login = NEW.constructor_ref || '_c',
-        password = generate_scram_hash(NEW.constructor_ref)
-    WHERE tipo = 'Escuderia' AND id_original = NEW.constructor_id;
+    SET login = NEW.constructorref || '_c',
+        password = generate_scram_hash(NEW.constructorref)
+    WHERE tipo = 'Escuderia' AND id_original = NEW.constructorid;
     
     RETURN NEW;
 END;
@@ -84,7 +84,7 @@ $$ LANGUAGE plpgsql;
 
 -- Trigger para criar usuário quando um novo piloto é adicionado
 CREATE TRIGGER trg_create_driver_user
-    AFTER INSERT ON drivers
+    AFTER INSERT ON driver
     FOR EACH ROW
     EXECUTE FUNCTION create_driver_user();
 
@@ -96,7 +96,7 @@ CREATE TRIGGER trg_create_constructor_user
 
 -- Trigger para atualizar usuário quando um piloto é modificado
 CREATE TRIGGER trg_update_driver_user
-    AFTER UPDATE ON drivers
+    AFTER UPDATE ON driver
     FOR EACH ROW
     EXECUTE FUNCTION update_driver_user();
 
