@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,8 +6,17 @@ import { Badge } from '@/components/ui/badge';
 import { Users, Trophy, Calendar, Flag, Plus, Search, Upload } from 'lucide-react';
 import NewTeamModal from '../components/NewTeamModal';
 import NewDriverModal from '../components/NewDriverModal';
-import SearchDriverModal from '../components/SearchDriverModal';
+import SearchDriverByLastNameModal from '../components/SearchDriverByLastNameModal';
 import UploadDriversModal from '../components/UploadDriversModal';
+import { 
+  dashboardApi, 
+  AdminStats, 
+  RaceData, 
+  TeamData, 
+  DriverData, 
+  TeamStats, 
+  DriverStats 
+} from '../lib/api';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -17,43 +25,108 @@ const Dashboard = () => {
   const [showSearchDriver, setShowSearchDriver] = useState(false);
   const [showUploadDrivers, setShowUploadDrivers] = useState(false);
 
-  const adminStats = {
-    totalDrivers: 847,
-    totalTeams: 34,
-    totalSeasons: 74,
-    races: [
-      { name: 'GP do Bahrein', laps: 57, time: '1:37:05.889' },
-      { name: 'GP da Arábia Saudita', laps: 50, time: '1:31:12.220' },
-      { name: 'GP da Austrália', laps: 58, time: '1:20:27.894' }
-    ],
-    teams: [
-      { name: 'Red Bull Racing', points: 860 },
-      { name: 'Mercedes', points: 409 },
-      { name: 'Ferrari', points: 406 }
-    ],
-    drivers: [
-      { name: 'Max Verstappen', points: 575 },
-      { name: 'Sergio Perez', points: 285 },
-      { name: 'Lewis Hamilton', points: 234 }
-    ]
+  // Estados para dados do admin
+  const [adminStats, setAdminStats] = useState<AdminStats | null>(null);
+  const [races, setRaces] = useState<RaceData[]>([]);
+  const [teams, setTeams] = useState<TeamData[]>([]);
+  const [drivers, setDrivers] = useState<DriverData[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Estados para dados da equipe e piloto
+  const [teamStats, setTeamStats] = useState<TeamStats | null>(null);
+  const [driverStats, setDriverStats] = useState<DriverStats | null>(null);
+
+  // Função para carregar dados do admin
+  const loadAdminData = async () => {
+    try {
+      setLoading(true);
+      const [statsResponse, racesResponse, teamsResponse, driversResponse] = await Promise.all([
+        dashboardApi.getAdminStats(),
+        dashboardApi.getCurrentYearRaces(),
+        dashboardApi.getCurrentYearTeams(),
+        dashboardApi.getCurrentYearDrivers(),
+      ]);
+
+      if (statsResponse.success) setAdminStats(statsResponse.data);
+      if (racesResponse.success) setRaces(racesResponse.data);
+      if (teamsResponse.success) setTeams(teamsResponse.data);
+      if (driversResponse.success) setDrivers(driversResponse.data);
+    } catch (error) {
+      console.error('Erro ao carregar dados do admin:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const teamStats = {
-    wins: 16,
-    driversCount: 23,
-    firstYear: 1950,
-    lastYear: 2024
+  // Função para carregar dados da equipe
+  const loadTeamData = async (constructorId: string) => {
+    try {
+      console.log('Iniciando carregamento dos dados da equipe para ID:', constructorId);
+      setLoading(true);
+      const response = await dashboardApi.getTeamStats(constructorId);
+      console.log('Resposta da API getTeamStats:', response);
+      if (response.success) {
+        setTeamStats(response.data);
+        console.log('Dados da equipe carregados com sucesso:', response.data);
+      } else {
+        console.error('API retornou success: false para getTeamStats:', response);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar dados da equipe:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const driverStats = {
-    firstYear: 2007,
-    lastYear: 2024,
-    performance: [
-      { year: 2023, circuit: 'Silverstone', points: 25, wins: 1, races: 1 },
-      { year: 2023, circuit: 'Monza', points: 18, wins: 0, races: 1 },
-      { year: 2022, circuit: 'Interlagos', points: 15, wins: 0, races: 1 }
-    ]
+  // Função para carregar dados do piloto
+  const loadDriverData = async (driverId: string) => {
+    try {
+      console.log('Iniciando carregamento dos dados do piloto para ID:', driverId);
+      setLoading(true);
+      const response = await dashboardApi.getDriverStats(driverId);
+      console.log('Resposta da API getDriverStats:', response);
+      if (response.success) {
+        setDriverStats(response.data);
+        console.log('Dados do piloto carregados com sucesso:', response.data);
+      } else {
+        console.error('API retornou success: false para getDriverStats:', response);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar dados do piloto:', error);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  useEffect(() => {
+    console.log('Dashboard useEffect - user:', user);
+    console.log('Dashboard useEffect - user.type:', user?.type);
+    console.log('Dashboard useEffect - user.idOriginal:', user?.idOriginal);
+    
+    if (user?.type === 'administrator') {
+      loadAdminData();
+    } else if (user?.type === 'team' && user?.idOriginal) {
+      console.log('Carregando dados da equipe para ID:', user.idOriginal);
+      loadTeamData(user.idOriginal.toString());
+    } else if (user?.type === 'driver' && user?.idOriginal) {
+      console.log('Carregando dados do piloto para ID:', user.idOriginal);
+      loadDriverData(user.idOriginal.toString());
+    } else {
+      // Se não há condições para carregar dados, desabilita o loading
+      console.log('Nenhuma condição atendida para carregar dados. Tipo:', user?.type, 'idOriginal:', user?.idOriginal);
+      setLoading(false);
+    }
+  }, [user?.type, user?.idOriginal]);
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-center items-center h-64">
+          <div className="text-xl">Carregando...</div>
+        </div>
+      </div>
+    );
+  }
 
   if (user?.type === 'administrator') {
     return (
@@ -71,7 +144,7 @@ const Dashboard = () => {
               <Users className="h-4 w-4" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{adminStats.totalDrivers}</div>
+              <div className="text-2xl font-bold">{adminStats?.total_pilotos || 0}</div>
             </CardContent>
           </Card>
 
@@ -81,7 +154,7 @@ const Dashboard = () => {
               <Flag className="h-4 w-4" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{adminStats.totalTeams}</div>
+              <div className="text-2xl font-bold">{adminStats?.total_escuderias || 0}</div>
             </CardContent>
           </Card>
 
@@ -91,7 +164,7 @@ const Dashboard = () => {
               <Calendar className="h-4 w-4" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{adminStats.totalSeasons}</div>
+              <div className="text-2xl font-bold">{adminStats?.total_temporadas || 0}</div>
             </CardContent>
           </Card>
         </div>
@@ -130,13 +203,15 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {adminStats.races.map((race, index) => (
+                {races.slice(0, 3).map((race, index) => (
                   <div key={index} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg transition-colors">
                     <div>
-                      <p className="font-medium text-gray-900 dark:text-white">{race.name}</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-300">{race.laps} voltas</p>
+                      <p className="font-medium text-gray-900 dark:text-white">{race.nome_corrida}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">{race.max_voltas_registradas} voltas</p>
                     </div>
-                    <Badge variant="outline" className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300">{race.time}</Badge>
+                    <Badge variant="outline" className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300">
+                      {race.duracao_estimada_formatada}
+                    </Badge>
                   </div>
                 ))}
               </div>
@@ -149,10 +224,12 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {adminStats.teams.map((team, index) => (
+                {teams.slice(0, 3).map((team, index) => (
                   <div key={index} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg transition-colors">
-                    <p className="font-medium text-gray-900 dark:text-white">{team.name}</p>
-                    <Badge className="bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300">{team.points} pts</Badge>
+                    <p className="font-medium text-gray-900 dark:text-white">{team.nome_escuderia}</p>
+                    <Badge className="bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300">
+                      {team.total_pontos_ano} pts
+                    </Badge>
                   </div>
                 ))}
               </div>
@@ -165,10 +242,12 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {adminStats.drivers.map((driver, index) => (
+                {drivers.slice(0, 3).map((driver, index) => (
                   <div key={index} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg transition-colors">
-                    <p className="font-medium text-gray-900 dark:text-white">{driver.name}</p>
-                    <Badge className="bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">{driver.points} pts</Badge>
+                    <p className="font-medium text-gray-900 dark:text-white">{driver.nome_piloto}</p>
+                    <Badge className="bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">
+                      {driver.total_pontos_ano} pts
+                    </Badge>
                   </div>
                 ))}
               </div>
@@ -199,7 +278,7 @@ const Dashboard = () => {
               <Trophy className="h-4 w-4" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{teamStats.wins}</div>
+              <div className="text-2xl font-bold">{teamStats?.vitorias || 0}</div>
             </CardContent>
           </Card>
 
@@ -209,7 +288,7 @@ const Dashboard = () => {
               <Users className="h-4 w-4" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{teamStats.driversCount}</div>
+              <div className="text-2xl font-bold">{teamStats?.pilotos_unicos || 0}</div>
             </CardContent>
           </Card>
 
@@ -219,7 +298,7 @@ const Dashboard = () => {
               <Calendar className="h-4 w-4" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{teamStats.firstYear}</div>
+              <div className="text-2xl font-bold">{teamStats?.primeiro_ano || 'N/A'}</div>
             </CardContent>
           </Card>
 
@@ -229,7 +308,7 @@ const Dashboard = () => {
               <Calendar className="h-4 w-4" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{teamStats.lastYear}</div>
+              <div className="text-2xl font-bold">{teamStats?.ultimo_ano || 'N/A'}</div>
             </CardContent>
           </Card>
         </div>
@@ -241,13 +320,20 @@ const Dashboard = () => {
             <CardDescription className="text-muted-foreground dark:text-gray-300">Gerenciar pilotos da equipe</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <Button 
                 onClick={() => setShowSearchDriver(true)}
                 className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white"
               >
                 <Search className="w-4 h-4" />
-                <span>Buscar Piloto por Nome</span>
+                <span>Buscar Piloto por Sobrenome</span>
+              </Button>
+              <Button 
+                onClick={() => setShowNewDriver(true)}
+                className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Cadastrar Novo Piloto</span>
               </Button>
               <Button 
                 onClick={() => setShowUploadDrivers(true)}
@@ -261,8 +347,9 @@ const Dashboard = () => {
         </Card>
 
         {/* Modals */}
-        <SearchDriverModal isOpen={showSearchDriver} onClose={() => setShowSearchDriver(false)} />
+        <SearchDriverByLastNameModal isOpen={showSearchDriver} onClose={() => setShowSearchDriver(false)} />
         <UploadDriversModal isOpen={showUploadDrivers} onClose={() => setShowUploadDrivers(false)} />
+        <NewDriverModal isOpen={showNewDriver} onClose={() => setShowNewDriver(false)} />
       </div>
     );
   }
@@ -283,7 +370,7 @@ const Dashboard = () => {
               <Calendar className="h-4 w-4" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{driverStats.firstYear}</div>
+              <div className="text-2xl font-bold">{driverStats?.period?.primeiro_ano || 'N/A'}</div>
             </CardContent>
           </Card>
 
@@ -293,10 +380,25 @@ const Dashboard = () => {
               <Calendar className="h-4 w-4" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{driverStats.lastYear}</div>
+              <div className="text-2xl font-bold">{driverStats?.period?.ultimo_ano || 'N/A'}</div>
             </CardContent>
           </Card>
         </div>
+
+        {/* Driver Actions */}
+        <Card className="mb-8 bg-card dark:bg-gray-800 border-border dark:border-gray-700 transition-colors">
+          <CardHeader>
+            <CardTitle className="text-card-foreground dark:text-white">Ações do Piloto</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Button 
+              className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <Search className="w-4 h-4" />
+              <span>Visualizar Meus Relatórios</span>
+            </Button>
+          </CardContent>
+        </Card>
 
         {/* Performance by Year and Circuit */}
         <Card className="bg-card dark:bg-gray-800 border-border dark:border-gray-700 transition-colors">
@@ -306,29 +408,35 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {driverStats.performance.map((perf, index) => (
+              {driverStats?.performance?.slice(0, 3).map((perf, index) => (
                 <div key={index} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-700 transition-colors">
                   <div className="flex justify-between items-start mb-2">
                     <div>
-                      <h4 className="font-semibold text-gray-900 dark:text-white">{perf.circuit}</h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-300">Ano: {perf.year}</p>
+                      <h4 className="font-semibold text-gray-900 dark:text-white">{perf.circuito}</h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">Ano: {perf.ano}</p>
                     </div>
                     <div className="text-right">
-                      <Badge className="bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 mb-1">{perf.points} pontos</Badge>
+                      <Badge className="bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 mb-1">
+                        {perf.pontos} pontos
+                      </Badge>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <span className="text-gray-600 dark:text-gray-300">Vitórias:</span>
-                      <span className="ml-2 font-medium text-gray-900 dark:text-white">{perf.wins}</span>
+                      <span className="ml-2 font-medium text-gray-900 dark:text-white">{perf.vitorias}</span>
                     </div>
                     <div>
                       <span className="text-gray-600 dark:text-gray-300">Corridas:</span>
-                      <span className="ml-2 font-medium text-gray-900 dark:text-white">{perf.races}</span>
+                      <span className="ml-2 font-medium text-gray-900 dark:text-white">{perf.total_corridas}</span>
                     </div>
                   </div>
                 </div>
-              ))}
+              )) || (
+                <div className="text-center text-gray-500 dark:text-gray-400">
+                  Nenhum dado de performance disponível
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -340,3 +448,4 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+

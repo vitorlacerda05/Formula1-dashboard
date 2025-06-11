@@ -3,6 +3,7 @@ import { ApiResponse } from '../@types'
 import authRoutes from './auth.routes'
 import { reportStatusRoutes } from './report_status.routes'
 import reportAirportsRoutes from './report_airports.routes'
+import dashboardRoutes from './dashboard.routes'
 
 export default async function routes(fastify: FastifyInstance) {
   // Health check
@@ -16,6 +17,9 @@ export default async function routes(fastify: FastifyInstance) {
   // Registrar rotas de relatório
   fastify.register(reportStatusRoutes) // <- adiciona as rotas do relatório 1
   fastify.register(reportAirportsRoutes) // <- adiciona as rotas do relatório 2
+
+  // Registrar rotas do dashboard
+  fastify.register(dashboardRoutes, { prefix: '/dashboard' })
 
   // Aqui você pode registrar outras rotas conforme necessário
 }

@@ -10,7 +10,7 @@ export class AuthService {
 
       // Buscar usuário no banco
       const result = await pool.query(
-        `SELECT userid, login, tipo, id_original, ativo, password 
+        `SELECT userid, login, tipo, id_original as "idOriginal", ativo, password 
          FROM users 
          WHERE login = $1 AND ativo = 'S'`,
         [login]
@@ -45,13 +45,7 @@ export class AuthService {
       // Registrar login
       await this.registerLogin(user.userid)
 
-      const session: UserSession = {
-        userid: user.userid,
-        login: user.login,
-        tipo: user.tipo,
-        idOriginal: user.idOriginal,
-        isAuthenticated: true
-      }
+      const session = await this.getSessionDetails(user);
 
       return {
         success: true,
@@ -118,5 +112,73 @@ export class AuthService {
            request.headers['x-forwarded-for']?.toString() || 
            request.socket.remoteAddress || 
            'unknown'
+  }
+
+  async getUserById(userId: number): Promise<User | null> {
+    try {
+      const result = await pool.query<User>(
+        `SELECT userid, login, tipo, id_original as "idOriginal", ativo 
+         FROM users 
+         WHERE userid = $1 AND ativo = 'S'`,
+        [userId]
+      );
+
+      if (result.rows.length === 0) {
+        return null;
+      }
+
+      return result.rows[0];
+    } catch (error) {
+      console.error('Erro ao buscar usuário por ID:', error);
+      return null;
+    }
+  }
+
+  async getSessionDetails(user: User): Promise<UserSession> {
+    const session: UserSession = {
+      userid: user.userid,
+      login: user.login,
+      tipo: user.tipo,
+      idOriginal: user.idOriginal,
+      isAuthenticated: true,
+    };
+
+    if (user.tipo === 'Administrador') {
+      session.fullName = user.login;
+    } else if (user.tipo === 'Piloto' && user.idOriginal) {
+      const driverResult = await pool.query(
+        'SELECT forename, surname FROM driver WHERE driverid = $1',
+        [user.idOriginal]
+      );
+      if (driverResult.rows.length > 0) {
+        const driver = driverResult.rows[0];
+        session.fullName = `${driver.forename} ${driver.surname}`;
+
+        // Find the driver's most recent team
+        const recentTeamResult = await pool.query(
+          `SELECT t.name 
+           FROM constructors t
+           JOIN results r ON t.constructorid = r.constructorid
+           WHERE r.driverid = $1
+           ORDER BY r.raceid DESC
+           LIMIT 1`,
+          [user.idOriginal]
+        );
+
+        if (recentTeamResult.rows.length > 0) {
+          session.teamName = recentTeamResult.rows[0].name;
+        }
+      }
+    } else if (user.tipo === 'Escuderia' && user.idOriginal) {
+      const teamResult = await pool.query(
+        'SELECT name FROM constructors WHERE constructorid = $1',
+        [user.idOriginal]
+      );
+      if (teamResult.rows.length > 0) {
+        session.teamName = teamResult.rows[0].name;
+      }
+    }
+
+    return session;
   }
 } 

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -21,13 +20,13 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     
     switch (user.type) {
       case 'administrator':
-        return `Usuário: ${user.name}`;
+        return `Usuário: ${user.fullName}`;
       case 'team':
-        return `Equipe: ${user.teamName}, Pilotos Atuais: ${user.driversCount}`;
+        return `Equipe: ${user.teamName}`;
       case 'driver':
         return `Piloto: ${user.fullName}, Equipe Atual: ${user.teamName}`;
       default:
-        return user.name;
+        return user.fullName || '';
     }
   };
 
