@@ -137,9 +137,9 @@ const Login = () => {
             <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
               <p className="text-sm text-gray-600 dark:text-gray-300 mb-2 font-semibold">Usuários de demonstração:</p>
               <div className="space-y-1 text-xs text-gray-500 dark:text-gray-400">
-                <p><strong>admin</strong> / 123 (Administrador)</p>
-                <p><strong>ferrari</strong> / 123 (Equipe)</p>
-                <p><strong>hamilton</strong> / 123 (Piloto)</p>
+                <p><strong>admin</strong> / admin (Administrador)</p>
+                <p><strong>mercedes_c</strong> / mercedes (Escuderia)</p>
+                <p><strong>hamilton_d</strong> / hamilton (Piloto)</p>
               </div>
             </div>
           </CardContent>

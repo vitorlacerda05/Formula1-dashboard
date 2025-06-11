@@ -1,6 +1,7 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { LoginRequest, LoginResponse, ApiResponse } from '../@types'
 import authRoutes from './auth.routes'
+
 import { reportStatusRoutes } from './report_status.routes'
 
 export default async function routes(fastify: FastifyInstance) {
