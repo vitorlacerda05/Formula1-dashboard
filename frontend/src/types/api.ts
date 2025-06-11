@@ -5,6 +5,10 @@ export interface User {
   idOriginal: number;
   isAuthenticated: boolean;
   type?: 'administrator' | 'team' | 'driver';
+  teamName?: string;
+  fullName?: string;
+  teamId?: number;
+  driverId?: number;
 }
 
 export interface LoginResponse {

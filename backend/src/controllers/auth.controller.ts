@@ -64,10 +64,10 @@ export class AuthController {
           })
         }
 
-        // Verificar se o usuário ainda está ativo no banco
-        const userValidation = await this.authService.validateUser(session.userid)
-        
-        if (!userValidation) {
+        // Fetch the full user object from DB to ensure data is fresh
+        const user = await this.authService.getUserById(session.userid)
+
+        if (!user) {
           // Limpar cookie inválido
           reply.clearCookie('session')
           return reply.code(200).send({
@@ -77,10 +77,12 @@ export class AuthController {
           })
         }
 
+        const detailedSession = await this.authService.getSessionDetails(user)
+
         return reply.code(200).send({
           success: true,
           isAuthenticated: true,
-          session
+          session: detailedSession
         })
       } catch (error) {
         // Cookie corrompido, limpar

@@ -8,6 +8,8 @@ export interface User {
   idOriginal: number;
   ativo: boolean;
   ultimoLogin?: Date;
+  fullName?: string;
+  teamName?: string;
 }
 
 export interface UserSession {
@@ -16,6 +18,8 @@ export interface UserSession {
   tipo: UserType;
   idOriginal: number;
   isAuthenticated: boolean;
+  fullName?: string;
+  teamName?: string;
 }
 
 export interface LoginRequest {

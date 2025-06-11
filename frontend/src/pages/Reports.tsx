@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,11 +7,11 @@ import { BarChart3, FileText, Search, MapPin, Users, Trophy, Calendar, X } from 
 import CitySearchModal from '../components/CitySearchModal';
 import { useReportStatus } from '../contexts/ReportStatusContext'
 
-
 const Reports = () => {
   const { user } = useAuth();
   const [activeReport, setActiveReport] = useState<string | null>(null);
   const [showCitySearch, setShowCitySearch] = useState(false);
+  const { resultados, equipesPilotos, isLoading, isLoadingTeams, fetchResultados, fetchEquipesPilotos } = useReportStatus();
 
   const adminReports = [
     {
@@ -90,11 +89,21 @@ const Reports = () => {
       setShowCitySearch(true);
       return;
     }
+    
+    // Para o relatório de status que tem API real, faz a chamada
+    if (reportId === 'race-status') {
+      fetchResultados();
+    }
+    
+    // Para o relatório de equipes com pilotos
+    if (reportId === 'teams-drivers') {
+      fetchEquipesPilotos();
+    }
+    
     setActiveReport(reportId);
   };
 
   const getReportContent = () => {
-    const { resultados, isLoading } = useReportStatus();
     switch (activeReport) {
       case 'race-status':
         return (
@@ -104,12 +113,16 @@ const Reports = () => {
               <p>Carregando...</p>
             ) : (
               <div className="space-y-2">
-                {resultados.map((item, index) => (
-                  <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                    <span className="font-medium">{item.nome_status}</span>
-                    <Badge variant="outline">{item.quantidade_resultados.toLocaleString()}</Badge>
-                  </div>
-                ))}
+                {Array.isArray(resultados) && resultados.length > 0 ? (
+                  resultados.map((item, index) => (
+                    <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                      <span className="font-medium">{item.nome_status}</span>
+                      <Badge variant="outline">{item.quantidade_resultados.toLocaleString()}</Badge>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-500">Nenhum resultado encontrado.</p>
+                )}
               </div>
             )}
           </div>
@@ -119,34 +132,38 @@ const Reports = () => {
         return (
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Equipes com Número de Pilotos</h3>
-            <div className="space-y-4">
-              {[
-                { team: 'Ferrari', drivers: 89, races: 1042, avgLaps: 52.3, totalTime: '847:23:15' },
-                { team: 'McLaren', drivers: 76, races: 896, avgLaps: 48.7, totalTime: '723:45:32' },
-                { team: 'Mercedes', drivers: 45, races: 234, avgLaps: 55.1, totalTime: '198:12:45' }
-              ].map((team, index) => (
-                <div key={index} className="p-4 border rounded-lg bg-white">
-                  <div className="flex justify-between items-start mb-3">
-                    <h4 className="font-semibold text-lg">{team.team}</h4>
-                    <Badge className="bg-blue-100 text-blue-700">{team.drivers} pilotos</Badge>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
-                    <div>
-                      <span className="text-gray-600">Total de Corridas:</span>
-                      <span className="ml-2 font-medium">{team.races}</span>
+            {isLoadingTeams ? (
+              <p>Carregando...</p>
+            ) : (
+              <div className="space-y-4">
+                {Array.isArray(equipesPilotos) && equipesPilotos.length > 0 ? (
+                  equipesPilotos.map((team, index) => (
+                    <div key={index} className="p-4 border rounded-lg bg-white">
+                      <div className="flex justify-between items-start mb-3">
+                        <h4 className="font-semibold text-lg">{team.nome_equipe}</h4>
+                        <Badge className="bg-blue-100 text-blue-700">{team.numero_pilotos} pilotos</Badge>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+                        <div>
+                          <span className="text-gray-600">Total de Corridas:</span>
+                          <span className="ml-2 font-medium">{team.total_corridas.toLocaleString()}</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Média de Voltas:</span>
+                          <span className="ml-2 font-medium">{team.media_voltas}</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Tempo Total:</span>
+                          <span className="ml-2 font-medium">{team.tempo_total_formatado}</span>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <span className="text-gray-600">Média de Voltas:</span>
-                      <span className="ml-2 font-medium">{team.avgLaps}</span>
-                    </div>
-                    <div>
-                      <span className="text-gray-600">Tempo Total:</span>
-                      <span className="ml-2 font-medium">{team.totalTime}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                  ))
+                ) : (
+                  <p className="text-gray-500">Nenhuma equipe encontrada.</p>
+                )}
+              </div>
+            )}
           </div>
         );
 
@@ -174,7 +191,7 @@ const Reports = () => {
       case 'team-race-status':
         return (
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Status de Corridas - {user?.teamName}</h3>
+            <h3 className="text-lg font-semibold">Status de Corridas - {user?.teamName || 'Equipe'}</h3>
             <div className="space-y-2">
               {[
                 { status: 'Finalizado', count: 1247 },
@@ -195,7 +212,7 @@ const Reports = () => {
       case 'driver-points':
         return (
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Pontos por Ano - {user?.fullName}</h3>
+            <h3 className="text-lg font-semibold">Pontos por Ano - {user?.fullName || 'Piloto'}</h3>
             <div className="space-y-4">
               {[
                 { year: 2023, points: 234, races: [
@@ -231,7 +248,7 @@ const Reports = () => {
       case 'driver-race-status':
         return (
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Status de Corridas - {user?.fullName}</h3>
+            <h3 className="text-lg font-semibold">Status de Corridas - {user?.fullName || 'Piloto'}</h3>
             <div className="space-y-2">
               {[
                 { status: 'Finalizado', count: 287 },
@@ -259,8 +276,8 @@ const Reports = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="mb-8">
-        <h2 className="text-3xl font-bold text-gray-900 mb-2">Relatórios</h2>
-        <p className="text-gray-600">
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 transition-colors">Relatórios</h2>
+        <p className="text-gray-600 dark:text-gray-300 transition-colors">
           {user?.type === 'administrator' && 'Relatórios administrativos do sistema'}
           {user?.type === 'team' && `Relatórios da equipe ${user?.teamName}`}
           {user?.type === 'driver' && `Relatórios do piloto ${user?.fullName}`}
