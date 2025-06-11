@@ -1,8 +1,8 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { LoginRequest, LoginResponse, ApiResponse } from '../@types'
 import authRoutes from './auth.routes'
-
 import { reportStatusRoutes } from './report_status.routes'
+import reportAirportsRoutes from './report_airports.routes';
 
 export default async function routes(fastify: FastifyInstance) {
   // Health check
@@ -14,7 +14,8 @@ export default async function routes(fastify: FastifyInstance) {
   fastify.register(authRoutes, { prefix: '/auth' })
 
   // Registrar rotas de relatório
-  fastify.register(reportStatusRoutes)
+  fastify.register(reportStatusRoutes) // <- adiciona as rotas do relatório 1
+  fastify.register(reportAirportsRoutes); // <- adiciona as rotas do relatório 2
 
   // Aqui você pode registrar outras rotas conforme necessário
 }

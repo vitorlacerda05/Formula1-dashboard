@@ -1,5 +1,5 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { db } from '../config/database'; // ajuste esse path se necessário
+import { db } from '../config/database';
 
 export const getRelatorioStatus = async (request: FastifyRequest, reply: FastifyReply) => {
   try {

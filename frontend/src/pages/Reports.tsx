@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { BarChart3, FileText, Search, MapPin, Users, Trophy, Calendar, X } from 'lucide-react';
 import CitySearchModal from '../components/CitySearchModal';
+import { useReportStatus } from '../contexts/ReportStatusContext'
+
 
 const Reports = () => {
   const { user } = useAuth();
@@ -92,25 +94,24 @@ const Reports = () => {
   };
 
   const getReportContent = () => {
+    const { resultados, isLoading } = useReportStatus();
     switch (activeReport) {
       case 'race-status':
         return (
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Resultados por Status de Corrida</h3>
-            <div className="space-y-2">
-              {[
-                { status: 'Finalizado', count: 25847 },
-                { status: 'Abandonou', count: 5234 },
-                { status: 'Acidente', count: 1832 },
-                { status: 'Problema Mecânico', count: 2156 },
-                { status: 'Desqualificado', count: 89 }
-              ].map((item, index) => (
-                <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                  <span className="font-medium">{item.status}</span>
-                  <Badge variant="outline">{item.count.toLocaleString()}</Badge>
-                </div>
-              ))}
-            </div>
+            {isLoading ? (
+              <p>Carregando...</p>
+            ) : (
+              <div className="space-y-2">
+                {resultados.map((item, index) => (
+                  <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                    <span className="font-medium">{item.nome_status}</span>
+                    <Badge variant="outline">{item.quantidade_resultados.toLocaleString()}</Badge>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         );
 
