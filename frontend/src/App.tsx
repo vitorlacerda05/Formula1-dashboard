@@ -12,6 +12,7 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
+import { ReportStatusProvider } from "./contexts/ReportStatusContext";
 
 const queryClient = new QueryClient();
 
@@ -55,7 +56,9 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <AuthProvider>
-            <AppRoutes />
+            <ReportStatusProvider>
+              <AppRoutes />
+            </ReportStatusProvider>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
