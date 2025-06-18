@@ -1,6 +1,8 @@
 # F1 Dashboard
 
-Um sistema interativo para análise e visualização de dados da Fórmula 1, desenvolvido como projeto final para a disciplina SCC-541 - Laboratório de Bases de Dados do ICMC-USP.
+Este repositório é um fork do projeto original [F1 Dashboard](https://github.com/Gabriel-Fachini/f1-dashboard), desenvolvido como projeto final para a disciplina SCC-541 - Laboratório de Bases de Dados do ICMC-USP.
+
+Sistema interativo para análise e visualização de dados da Fórmula 1.
 
 ## 🚀 Funcionalidades
 
@@ -93,3 +95,7 @@ Este projeto foi desenvolvido como trabalho acadêmico para a disciplina SCC-541
 - Prof. Dr. Caetano Traina Jr.
 - PAE: Êrica Peters do Carmo
 - Instituto de Ciências Matemáticas e de Computação - USP
+
+## 🔄 Projeto Original
+
+Este é um fork do projeto original [F1 Dashboard](https://github.com/Gabriel-Fachini/f1-dashboard). Todo o crédito pelo desenvolvimento inicial vai para os autores originais do projeto.
